@@ -1,0 +1,1 @@
+This page is a collection of links the [[Spreadsheets Discord Community]] encourages users to read before asking questions.
