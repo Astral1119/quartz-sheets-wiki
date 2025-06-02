@@ -1,3 +1,8 @@
 [submodule "sheets-wiki-data"]
 	path = content
 	url = https://github.com/Astral1119/sheets-wiki-data
+  branch = main
+[submodule "content"]
+	path = content
+	url = https://github.com/Astral1119/sheets-wiki-data
+	branch = main
