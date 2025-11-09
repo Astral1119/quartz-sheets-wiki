@@ -1,17 +1,28 @@
+// quartz/plugins/transformers/syntax.ts
 import { QuartzTransformerPlugin } from "../types"
-import rehypePrettyCode, { Options as CodeOptions, Theme as CodeTheme } from "rehype-pretty-code"
+import rehypePrettyCode, {
+  Options as PrettyCodeOptions,
+  Theme as CodeTheme,
+} from "rehype-pretty-code"
+import {
+  getHighlighter,
+  type Highlighter,
+  type Grammar,
+  type LanguageRegistration,
+} from "shiki"
+import sheetsGrammar from "../../static/grammars/sheets.tmLanguage.json" assert { type: "json" }
 
 interface Theme extends Record<string, CodeTheme> {
   light: CodeTheme
   dark: CodeTheme
 }
 
-interface Options {
+interface UserOptions {
   theme?: Theme
   keepBackground?: boolean
 }
 
-const defaultOptions: Options = {
+const defaultUserOpts: UserOptions = {
   theme: {
     light: "github-light",
     dark: "github-dark",
@@ -19,13 +30,66 @@ const defaultOptions: Options = {
   keepBackground: false,
 }
 
-export const SyntaxHighlighting: QuartzTransformerPlugin<Partial<Options>> = (userOpts) => {
-  const opts: CodeOptions = { ...defaultOptions, ...userOpts }
+let _highlighter: Highlighter | undefined
+
+async function getCustomHighlighter(): Promise<Highlighter> {
+  if (_highlighter) return _highlighter
+
+  _highlighter = await getHighlighter({
+    themes: [defaultUserOpts.theme!.light, defaultUserOpts.theme!.dark],
+    langs: [
+      {
+        ...sheetsGrammar,
+        name: "sheets",
+        aliases: ["gsheet", "googlesheets", "gse"],
+      },
+    ],
+  })
+
+  const originalGetLanguage = _highlighter.getLanguage.bind(_highlighter)
+
+  _highlighter.getLanguage = ((name: string | LanguageRegistration): Grammar | undefined => {
+    if (typeof name === "string") {
+      const aliasMap: Record<string, string> = {
+        gse: "sheets",
+        gsheet: "sheets",
+        googlesheets: "sheets",
+      }
+      const normalized = aliasMap[name.toLowerCase()] || name
+      return originalGetLanguage(normalized)
+    }
+    return originalGetLanguage(name)
+  }) as Highlighter["getLanguage"]
+
+  console.log(
+    "%c[Quartz] Shiki languages loaded:",
+    "color:#0a8;background:#fff;padding:2px 6px;border-radius:3px",
+    _highlighter.getLoadedLanguages().filter((l) => l.includes("sheet"))
+  )
+
+  return _highlighter
+}
+
+export const SyntaxHighlighting: QuartzTransformerPlugin<Partial<UserOptions>> = (
+  userOpts,
+) => {
+  const opts = { ...defaultUserOpts, ...userOpts }
+
+  const prettyCodeOpts: PrettyCodeOptions = {
+    theme: opts.theme,
+    keepBackground: opts.keepBackground,
+    getHighlighter: getCustomHighlighter,
+  }
 
   return {
     name: "SyntaxHighlighting",
+
+    markdownPlugins() {
+      return []
+    },
+
     htmlPlugins() {
-      return [[rehypePrettyCode, opts]]
+      return [[rehypePrettyCode, prettyCodeOpts]]
     },
   }
 }
