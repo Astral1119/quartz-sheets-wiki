@@ -10,7 +10,7 @@ import {
   type Grammar,
   type LanguageRegistration,
 } from "shiki"
-import sheetsGrammar from "../../static/grammars/sheets.tmLanguage.json" assert { type: "json" }
+import sheetsGrammar from "../../static/grammars/gse.tmLanguage.json" assert { type: "json" }
 
 interface Theme extends Record<string, CodeTheme> {
   light: CodeTheme
@@ -40,8 +40,8 @@ async function getCustomHighlighter(): Promise<Highlighter> {
     langs: [
       {
         ...sheetsGrammar,
-        name: "sheets",
-        aliases: ["gsheet", "googlesheets", "gse"],
+        name: "gse",
+        aliases: ["gs", "sheets", "formula"],
       },
     ],
   })
@@ -51,9 +51,9 @@ async function getCustomHighlighter(): Promise<Highlighter> {
   _highlighter.getLanguage = ((name: string | LanguageRegistration): Grammar | undefined => {
     if (typeof name === "string") {
       const aliasMap: Record<string, string> = {
-        gse: "sheets",
-        gsheet: "sheets",
-        googlesheets: "sheets",
+        gs: "gse",
+        sheets: "gse",
+        formula: "gse",
       }
       const normalized = aliasMap[name.toLowerCase()] || name
       return originalGetLanguage(normalized)
@@ -64,7 +64,7 @@ async function getCustomHighlighter(): Promise<Highlighter> {
   console.log(
     "%c[Quartz] Shiki languages loaded:",
     "color:#0a8;background:#fff;padding:2px 6px;border-radius:3px",
-    _highlighter.getLoadedLanguages().filter((l) => l.includes("sheet"))
+    _highlighter.getLoadedLanguages().filter((l) => l.includes("gse"))
   )
 
   return _highlighter
