@@ -10,7 +10,7 @@ import {
   type Grammar,
   type LanguageRegistration,
 } from "shiki"
-import sheetsGrammar from "../../static/grammars/gse.tmLanguage.json" assert { type: "json" }
+import sheetsGrammar from "../../static/gse-syntax/syntaxes/gse.tmLanguage.json" assert { type: "json" }
 
 interface Theme extends Record<string, CodeTheme> {
   light: CodeTheme
